@@ -1,0 +1,290 @@
+''''
+Ashiat Adeogun
+Data Analyst
+13/05/2024
+''''
+
+### Load a libraries
+
+```{r}
+# Load necessary libraries
+library(tidyverse)
+
+# Correct the file path and load the dataset
+data <- read.csv("C:/Users/adeog/OneDrive/Desktop/study_performance.csv")  
+ data
+
+
+```
+
+```{r}
+# Check the structure dataset
+str(data)
+
+```
+###### The dataset contains 1000 observations across 8 variables, capturing student demographic and performance data. It includes gender, race_ethnicity, parental education level, lunch type, test preparation course status, and scores in math, reading, and writing, reflecting a diverse educational background and performance metrics.
+
+```{r}
+# Check summary of the dataset
+summary(data)
+```
+##### The dataset comprises 1,000 entries of student data, detailing gender, race, parental education, lunch status, and test preparation course enrollment. It includes performance metrics: math scores range from 0 to 100, reading from 17 to 100, and writing from 10 to 100, with means around the mid-60s to high-60s.
+
+
+
+### Outliers
+```{r}
+# Create boxplots for scores to visually check for outliers
+ggplot(data, aes(x = factor(0), y = math_score)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Math Scores", x = "", y = "Math Score")
+
+# Repeat for reading and writing scores
+ggplot(data, aes(x = factor(0), y = reading_score)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Reading Scores", x = "", y = "Reading Score")
+
+ggplot(data, aes(x = factor(0), y = writing_score)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Writing Scores", x = "", y = "Writing Score")
+
+```
+
+##### The boxplots of math, reading, and writing scores depict a common pattern with a cluster of low outliers in each subject, suggesting either data entry errors or a small group of students significantly underperforming. The median scores for math and writing are approximately 75 and 70 respectively, indicating that half of the students scored below these marks. Reading scores have a slightly higher median around 75, reflecting a somewhat better performance in this subject area.
+
+##### The interquartile ranges (IQR) are quite narrow in all three subjects, indicating that the scores of most students are grouped relatively close together. This suggests a consistent performance across the middle 50% of the students. However, the existence of outliers, particularly in the lower range, indicates extreme cases that could skew the overall data interpretation and might require special attention either for academic support or data validation to ensure accuracy.
+
+##### In summary, while most students perform within a similar score range, the significant lower outliers across all subjects warrant further investigation to support those students or to correct potential data issues.
+
+### Statistical Outlier Detection
+```{r}
+# Function to calculate outliers
+identify_outliers <- function(vector) {
+  Q1 <- quantile(vector, 0.25)
+  Q3 <- quantile(vector, 0.75)
+  IQR <- Q3 - Q1
+  lower_bound <- Q1 - 1.5 * IQR
+  upper_bound <- Q3 + 1.5 * IQR
+  outliers <- vector[vector < lower_bound | vector > upper_bound]
+  return(outliers)
+}
+
+# Identify outliers in math scores
+math_outliers <- identify_outliers(data$math_score)
+print("Math Score Outliers:")
+print(math_outliers)
+
+# Identify outliers in reading scores
+reading_outliers <- identify_outliers(data$reading_score)
+print("Reading Score Outliers:")
+print(reading_outliers)
+
+# Identify outliers in writing scores
+writing_outliers <- identify_outliers(data$writing_score)
+print("Writing Score Outliers:")
+print(writing_outliers)
+
+```
+
+##### The outliers identified in the dataset for math, reading, and writing scores are significantly below the average scores of the cohort. Math scores have outliers as low as 0, with values ranging up to 26, indicating extreme underperformance or data entry errors. Reading and writing scores show similar patterns, with the lowest outliers at 17 and 10 respectively. These outliers are crucial for understanding the range of student abilities and possibly identifying students who may require additional support or interventions. They also highlight the need for reviewing the data collection and entry processes to ensure accuracy and reliability of the dataset.
+
+
+### Rerunning Analyses PostOutlier Adjustment
+```{r}
+# Example: Remove outliers and rerun a simple analysis
+# Creating a cleaned dataset without math score outliers
+clean_data_math <- data[!data$math_score %in% math_outliers,]
+clean_data_reading <- data[!data$reading_score %in% reading_outliers,]
+clean_data_writing <- data[!data$writing_score %in% writing_outliers,]
+
+# Recreate the boxplot for math scores without outliers
+ggplot(clean_data_math, aes(x = factor(0), y = math_score)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Math Scores without Outliers", x = "", y = "Math Score")
+
+# Recreate the boxplot for reading scores without outliers
+ggplot(clean_data_reading, aes(x = factor(0), y = reading_score)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Reading Scores without Outliers", x = "", y = "Reading Score")
+
+# Recreate the boxplot for writing scores without outliers
+ggplot(clean_data_writing, aes(x = factor(0), y = writing_score)) +  # Corrected variable name here
+  geom_boxplot() +
+  labs(title = "Boxplot of Writing Scores without Outliers", x = "", y = "Writing Score")
+
+
+```
+##### The boxplots for math, reading, and writing scores without outliers reveal more consistent performance distributions. Math and reading show tighter interquartile ranges, emphasizing greater consistency in scores. Writing scores, slightly broader in range, exhibit slightly higher variability. Each plot reflects a concentrated clustering of student scores around the median, enhancing our understanding of typical student performance levels.
+
+
+### Categorical Analysis
+
+```{r}
+
+# Plotting Math Scores by Gender
+ggplot(clean_data_math, aes(x = gender, y = math_score, fill = gender)) +
+  geom_boxplot() +
+  labs(title = "Math Scores by Gender", x = "Gender", y = "Math Score")
+
+# Plotting Math Scores by Race/Ethnicity
+ggplot(clean_data_math, aes(x = race_ethnicity, y = math_score, fill = race_ethnicity)) +
+  geom_boxplot() +
+  labs(title = "Math Scores by Race/Ethnicity", x = "Race/Ethnicity", y = "Math Score") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust text angle for better visibility
+
+# Plotting Math Scores by Parental Level of Education
+ggplot(clean_data_math, aes(x = parental_level_of_education, y = math_score, fill = parental_level_of_education)) +
+  geom_boxplot() +
+  labs(title = "Math Scores by Parental Level of Education", x = "Parental Education", y = "Math Score") +
+  theme(axis.text.x = element_text(angle = 40, hjust = 1)) 
+
+
+```
+
+
+##### The boxplots display math scores distributed by gender, race/ethnicity, and parental education level. Males slightly outperform females with a few lower outliers indicating variability. Race/ethnicity impacts scores significantly, with Group E showing the highest medians and Group A the lowest, suggesting disparities based on racial backgrounds. Students with parents holding higher educational degrees, like a master's, typically score higher, reflecting the influence of parental education on academic achievement. These visualizations highlight the necessity of addressing educational inequalities and tailoring interventions to support underperforming groups based on these sociodemographic factors.
+
+
+```{r}
+# Plotting reading_score by Gender
+ggplot(clean_data_reading, aes(x = gender, y = reading_score, fill = gender)) +
+  geom_boxplot() +
+  labs(title = "Reading_score by Gender", x = "Gender", y = "reading_score")
+
+# Plotting reading_score by Race/Ethnicity
+ggplot(clean_data_reading, aes(x = race_ethnicity, y = reading_score, fill = race_ethnicity)) +
+  geom_boxplot() +
+  labs(title = "Reading_score by Race/Ethnicity", x = "Race/Ethnicity", y = "reading_score") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust text angle for better visibility
+
+# Plotting reading_score by Parental Level of Education
+ggplot(clean_data_reading, aes(x = parental_level_of_education, y = reading_score, fill = parental_level_of_education)) +
+  geom_boxplot() +
+  labs(title = "Reading_score by Parental Level of Education", x = "Parental Education", y = "reading_score") +
+  theme(axis.text.x = element_text(angle = 40, hjust = 1)) 
+```
+
+##### The boxplots reveal differences in reading scores across genders and parental education levels. Females generally exhibit higher median reading scores compared to males, indicating a gender disparity in reading performance. Among parental education levels, students with parents holding a master's degree show the highest median scores, suggesting that higher parental education correlates with better academic outcomes in reading. Conversely, students whose parents have only some high school education tend to score lower, highlighting the potential impact of parental education on student achievement. These insights underscore the importance of educational support at home in influencing student performance.
+```{r}
+# Plotting writing_score by Gender
+ggplot(clean_data_writing, aes(x = gender, y = writing_score, fill = gender)) +
+  geom_boxplot() +
+  labs(title = "Writing_score by Gender", x = "Gender", y = "writing_score")
+
+# Plotting writing_score by Race/Ethnicity
+ggplot(clean_data_writing, aes(x = race_ethnicity, y = writing_score, fill = race_ethnicity)) +
+  geom_boxplot() +
+  labs(title = "Writing_score by Race/Ethnicity", x = "Race/Ethnicity", y = "writing_score") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Adjust text angle for better visibility
+
+# Plotting writing_score by Parental Level of Education
+ggplot(clean_data_writing, aes(x = parental_level_of_education, y = writing_score, fill = parental_level_of_education)) +
+  geom_boxplot() +
+  labs(title = "Writing_score by Parental Level of Education", x = "Parental Education", y = "writing_score") +
+  theme(axis.text.x = element_text(angle = 40, hjust = 1)) 
+```
+
+##### The boxplots illustrate writing scores segregated by gender. Females generally outperform males, evidenced by the higher median and a wider interquartile range, indicating greater consistency in higher performance among females. Males display a tighter interquartile range, suggesting less variability in their scores but with some outliers indicating exceptionally low scores. This gender-based disparity highlights differences in academic achievement in writing tasks, suggesting potential areas for educational focus to improve male performance or explore underlying causes such as engagement levels or educational support variations.
+
+
+### Comparing the Math Scores by Test Preparation Course
+```{r}
+
+ggplot(clean_data_math, aes(x = test_preparation_course, y = math_score, fill = test_preparation_course)) +
+  geom_boxplot() +
+  labs(title = "Math Scores by Test Preparation Course", x = "Test Preparation Course", y = "Math Score")
+```
+##### The boxplot illustrates that students who completed a test preparation course tend to have higher math scores compared to those who did not participate in any preparation course, indicating the potential effectiveness of these courses in improving math performance.
+
+### Comparing the Reading Scores by Test Preparation Course
+
+```{r}
+ggplot(clean_data_reading, aes(x = test_preparation_course, y = reading_score, fill = test_preparation_course)) +
+  geom_boxplot() +
+  labs(title = "Reading_score by Test Preparation Course", x = "Test Preparation Course", y = "Reading_score")
+```
+##### The boxplot shows reading scores by test preparation course status. Students who completed a test preparation course exhibit higher median scores and a tighter score range compared to those who did not partake, suggesting that such preparation likely enhances reading performance.
+
+
+### Comparing the Math Scores by Test Preparation Course
+```{r}
+ggplot(clean_data_writing, aes(x = test_preparation_course, y = writing_score, fill = test_preparation_course)) +
+  geom_boxplot() +
+  labs(title = "Writing_score by Test Preparation Course", x = "Test Preparation Course", y = "Writing_score")
+```
+
+##### This boxplot displays the distribution of writing scores based on whether students completed a test preparation course. It reveals that students who completed the course generally achieved higher median writing scores and a narrower score range compared to those who did not participate, indicating the beneficial impact of test preparation on writing outcomes.
+
+
+##### Analyzing the Impact of Test Preparation Courses:
+
+```{r}
+# T-test for math scores using cleaned data without outliers
+t.test(math_score ~ test_preparation_course, data = clean_data_math)
+
+# T-test for reading scores using cleaned data without outliers
+t.test(reading_score ~ test_preparation_course, data = clean_data_reading)
+
+# T-test for writing scores using cleaned data without outliers
+t.test(writing_score ~ test_preparation_course, data = clean_data_writing)
+
+
+
+```
+
+##### The statistical analysis of math scores using Welch's Two Sample t-test demonstrates a significant difference between students who completed a test preparation course and those who did not. Students who engaged in the preparation course averaged a math score of approximately 69.83, while those who did not averaged 64.60. The p-value of approximately 4.621 × 10−8 and a confidence interval ranging from 3.37 to 7.08 both underscore the positive impact of the preparation course on math performance.
+
+##### In reading, the effect of the test preparation course is similarly significant. The t-test shows students who completed the course scored an average of 73.89 compared to 66.94 for their peers who did not participate. The extremely low p-value of 5.62×10 −14 and a confidence interval from 5.17 to 8.74 strongly affirm the efficacy of test preparation in boosting reading scores.
+
+##### Writing scores analysis further supports the beneficial influence of the test preparation course, with participants scoring an average of 74.42 against 64.87 for non-participants. The p-value is less than 2.2×10 −16, and the confidence interval ranges from 7.76 to 11.33, marking the most pronounced difference among the three tested subjects. This significant disparity highlights the test preparation course's effectiveness in enhancing students' writing abilities.
+
+
+
+
+### Analyzing Parental Education Level Effects:
+```{r}
+# ANOVA for math scores based on parental education
+aov_math <- aov(math_score ~ parental_level_of_education, data = clean_data_math)
+summary(aov_math)
+
+# ANOVA for reading scores
+aov_reading <- aov(reading_score ~ parental_level_of_education, data = clean_data_reading)
+summary(aov_reading)
+
+# ANOVA for writing scores
+aov_writing <- aov(writing_score ~ parental_level_of_education, data = clean_data_writing)
+summary(aov_writing)
+
+
+```
+##### The Welch Two Sample t-tests performed on math, reading, and writing scores show statistically significant differences between students who completed a test preparation course and those who did not, across all subjects. Students who completed the course scored higher on average in math, reading, and writing, with the p-values indicating very strong evidence against the null hypothesis of no effect. Additionally, ANOVA tests conducted on the impact of parental education level on student performance show significant differences across all subjects, suggesting that higher parental education levels are associated with higher student scores, thus highlighting the influence of parental education on academic performance.
+
+### Analyzing Racial/Ethnic Group Differences:
+```{r}
+# ANOVA for math scores by race/ethnicity
+aov_math_race <- aov(math_score ~ race_ethnicity, data = clean_data_math)
+summary(aov_math_race)
+
+# ANOVA for reading scores
+aov_reading_race <- aov(reading_score ~ race_ethnicity, data = clean_data_reading)
+summary(aov_reading_race)
+
+# ANOVA for writing scores
+aov_writing_race <- aov(writing_score ~ race_ethnicity, data = clean_data_writing)
+summary(aov_writing_race)
+
+```
+##### ANOVA results reveal statistically significant differences in math, reading, and writing scores among different racial/ethnic groups, indicating a substantial influence of race/ethnicity on academic outcomes. The F-values are highly significant across all subjects, with the smallest p-value found in the analysis of math scores, demonstrating strong statistical evidence against the null hypothesis that race/ethnicity does not affect student scores. This underscores the impact of racial and ethnic backgrounds on educational achievement, suggesting a need for policies that address educational disparities among diverse student populations.
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+```
+
